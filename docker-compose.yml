@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+  pipeline:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: data-pipeline:latest
+    container_name: data-ingestion-pipeline
+    environment:
+      - ENVIRONMENT=dev
+      - PYTHONUNBUFFERED=1
+    env_file:
+      - .env
+    volumes:
+      # Mount data directory for persistence
+      - ./data:/app/data
+      # Mount logs directory
+      - ./logs:/app/logs
+      # Mount config for easy updates (dev only)
+      - ./config:/app/config:ro
+      # Mount schemas
+      - ./schemas:/app/schemas:ro
+    networks:
+      - pipeline-network
+    restart: unless-stopped
+    command: python -m pytest tests/ -v
+
+  # PostgreSQL for  database ingestion (optional)
+  postgres:
+    image: postgres:15-alpine
+    container_name: pipeline-postgres
+    environment:
+      POSTGRES_DB: pipeline_db
+      POSTGRES_USER: pipeline_user
+      POSTGRES_PASSWORD: pipeline_pass
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - pipeline-network
+    restart: unless-stopped
+
+networks:
+  pipeline-network:
+    driver: bridge
+
+volumes:
+  postgres-data:
