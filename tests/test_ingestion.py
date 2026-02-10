@@ -94,20 +94,16 @@ class TestAPIDataSource:
         assert records[0]['_source'] == 'api'
     
     @patch('src.ingestion.requests.get')
-    def test_api_retry_logic(self, mock_get, config):
+    @patch('src.ingestion.time.sleep')
+    def test_api_retry_logic(self, mock_sleep, mock_get, config):
         """Test API retry mechanism on failure"""
+        import requests
+        
         # First two calls fail, third succeeds
-        mock_response_fail = Mock()
-        mock_response_fail.raise_for_status.side_effect = Exception("Connection error")
-        
-        mock_response_success = Mock()
-        mock_response_success.json.return_value = [{"id": 1}]
-        mock_response_success.raise_for_status = Mock()
-        
         mock_get.side_effect = [
-            mock_response_fail,
-            mock_response_fail,
-            mock_response_success
+            requests.exceptions.RequestException("Connection error"),
+            requests.exceptions.RequestException("Connection error"),
+            Mock(json=lambda: [{"id": 1}], raise_for_status=Mock())
         ]
         
         source = APIDataSource(config, "https://api.example.com/data")
@@ -116,6 +112,7 @@ class TestAPIDataSource:
         records = list(source.ingest())
         assert len(records) == 1
         assert mock_get.call_count == 3
+        assert mock_sleep.call_count == 2  # Two retries means two sleeps
     
     @patch('src.ingestion.requests.get')
     def test_api_auth_header(self, mock_get, config, monkeypatch):
