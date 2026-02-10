@@ -1,0 +1,74 @@
+# Default Configuration
+# This file contains default settings for the Data Ingestion Pipeline
+
+# Ingestion Settings
+ingestion:
+  sources:
+    csv:
+      enabled: true
+      delimiter: ","
+      encoding: "utf-8"
+      max_file_size_mb: 100
+    api:
+      enabled: true
+      timeout_seconds: 30
+      max_retries: 3
+      retry_delay_seconds: 5
+    database:
+      enabled: true
+      connection_timeout: 10
+      query_timeout: 300
+  
+  batch_size: 1000
+  parallel_workers: 4
+
+# Validation Settings
+validation:
+  schema:
+    strict_mode: true
+    allow_extra_fields: false
+  
+  quality_checks:
+    null_check: true
+    type_check: true
+    range_check: true
+    pattern_check: true
+  
+  thresholds:
+    max_null_percentage: 5
+    max_error_percentage: 1
+
+# Logging Settings
+logging:
+  level: "INFO"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  file:
+    enabled: true
+    path: "logs/pipeline.log"
+    max_bytes: 10485760  # 10MB
+    backup_count: 5
+  console:
+    enabled: true
+
+# Error Handling
+error_handling:
+  quarantine:
+    enabled: true
+    path: "data/quarantine"
+  retry:
+    max_attempts: 3
+    backoff_multiplier: 2
+
+# Database Configuration (override with environment variables)
+database:
+  host: "localhost"
+  port: 5432
+  database: "pipeline_db"
+  username: "pipeline_user"
+  password: ""  # Set via DB_PASSWORD env var
+
+# API Configuration
+api:
+  base_url: "https://api.example.com"
+  api_key: ""  # Set via API_KEY env var
+  rate_limit: 100

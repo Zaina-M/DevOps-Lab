@@ -1,0 +1,24 @@
+# Production Environment Configuration
+# Overrides for production deployment
+
+logging:
+  level: "WARNING"
+  console:
+    enabled: false
+
+validation:
+  schema:
+    strict_mode: true
+    allow_extra_fields: false
+  
+  thresholds:
+    max_null_percentage: 1
+    max_error_percentage: 0.1
+
+ingestion:
+  batch_size: 5000
+  parallel_workers: 8
+
+error_handling:
+  retry:
+    max_attempts: 5
