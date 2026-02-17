@@ -90,7 +90,7 @@ print(f"Pipeline Health: {monitor.check_health()}")
 
 ## Project Structure
 
-.
+```
 ├── .github/
 │   └── workflows/
 │       └── ci.yml              # GitHub Actions CI/CD pipeline
@@ -119,11 +119,11 @@ print(f"Pipeline Health: {monitor.check_health()}")
 ├── README.md                   # Project documentation
 ├── SPRINT_0.md                 # Product backlog and planning
 └── SPRINT_1.md                 # Sprint 1 execution report
-
+```
 ---
 
 ## Architecture
-
+```
 ┌──────────────────┐
 │   Data Sources   │  ← CSV, API, Database
 └─────────┬────────┘
@@ -143,6 +143,7 @@ print(f"Pipeline Health: {monitor.check_health()}")
 ┌──────────────────┐
 │  Output / Logs   │  ← Valid data, error quarantine
 └──────────────────┘
+```
 
 ---
 

@@ -58,10 +58,4 @@ Test coverage reports are generated in:
 - `htmlcov/` directory (open `index.html` in browser)
 - `coverage.xml` (for CI tools)
 
-## Pipeline Status
 
-The pipeline status badge can be displayed in the README:
-
-```markdown
-![CI/CD Pipeline](https://github.com/YOUR_USERNAME/YOUR_REPO/actions/workflows/ci.yml/badge.svg)
-```
