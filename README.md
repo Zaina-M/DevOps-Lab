@@ -1,164 +1,95 @@
-# Data Ingestion & Validation Pipeline
+﻿# Data Ingestion & Validation Pipeline
 
-## Vision & Scope
+> **A course prototype data pipeline with automated ingestion, validation, monitoring, and quality checks for multi-source data.**
 
-### Product Vision
+[![CI/CD](https://img.shields.io/badge/CI%2FCD-GitHub%20Actions-blue)](https://github.com/Zaina-M/DevOps-Lab/actions)
+[![Docker](https://img.shields.io/badge/Docker-Ready-brightgreen)](#docker)
+[![Coverage](https://img.shields.io/badge/coverage-90.48%25-brightgreen)](#running-tests)
+[![Python](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org/)
 
-This pipeline automates the ingestion, validation, and monitoring of data from multiple sources, ensuring data quality and reliability through continuous integration and automated testing. It provides a production-ready framework for detecting data anomalies early and maintaining data integrity across the ingestion lifecycle.
+## Overview
 
-### Problem Statement
+A scalable data pipeline that ingests from **CSV, APIs, and databases**, validates against custom schemas, monitors data quality in real-time, and provides comprehensive logging and alerting. Built with DevOps best practices including automated testing, CI/CD, and Docker containerization.
 
-Modern data-driven systems require reliable data ingestion processes, but manual validation is error-prone, time-consuming, and fails to catch issues before they propagate downstream. Organizations struggle with inconsistent data quality, delayed error detection, and lack of visibility into data pipeline health, leading to poor decision-making and increased operational costs.
+## Key Features
 
-### Scope
+### ðŸš€ Data Ingestion
+- **Multi-source support**: CSV files, REST APIs, PostgreSQL, MySQL
+- **Memory-efficient**: Iterator-based processing for large datasets
+- **Resilient**: Automatic retry logic with exponential backoff
+- **Metadata tracking**: Timestamps and source information on every record
 
-#### In Scope
+### âœ… Validation & Quality
+- **Schema validation**: 9 data types (string, integer, email, phone, URL, etc.)
+- **Quality scoring**: Automated quality metrics and thresholds
+- **Flexible rules**: Required fields, ranges, patterns, enums
 
-- Ingestion of data from multiple sources (CSV files, APIs, databases)
-- Schema validation and data quality checks
-- Automated unit and integration testing
-- CI/CD pipeline with automated build, test, and deployment stages
-- Monitoring and alerting for pipeline health and data quality metrics
-- Error logging and basic reporting
-- Docker containerization for consistent deployment
-- Configuration management for different environments
+### ðŸ“Š Monitoring & Observability
+- **Real-time metrics**: Ingestion rates, validation success, quality scores
+- **Health checks**: Configurable thresholds and automated alerts
+- **Structured logging**: Rotating logs with error tracking and quarantine system
 
-#### Out of Scope
-
-- Real-time streaming data processing
-- Advanced machine learning-based anomaly detection
-- Data transformation and complex ETL operations
-- Multi-cloud deployment and orchestration
-- Production-grade security features (encryption at rest, advanced authentication)
-- Horizontal scaling and load balancing
-- Data governance and compliance frameworks (GDPR, HIPAA)
-- Advanced visualization dashboards
+### ðŸ³ DevOps Ready
+- **Docker**: Multi-stage builds with PostgreSQL integration
+- **CI/CD**: Automated testing and linting via GitHub Actions
+- **Environment configs**: Separate dev/prod configurations
+- **64 unit tests** with pytest and coverage reporting
 
 ---
 
 ## Quick Start
 
-### Prerequisites
+ðŸ“– **[Complete User Guide](USER_GUIDE.md)** | ðŸ³ **[Docker Guide](docs/DOCKER.md)** | ðŸ’¡ **[Examples](examples/)**
 
-- Python 3.10 or higher
-- Git
-
-### Installation
-
-1. Clone the repository:
 ```bash
+# Clone and setup
 git clone https://github.com/Zaina-M/DevOps-Lab.git
 cd "Agile and DevOps"
-```
-
-2. Install dependencies:
-```bash
 pip install -r requirements.txt
-```
-
-3. Set up environment variables:
-```bash
 cp .env.example .env
-# Edit .env with your configuration
+
+# Run example pipeline with Docker
+docker-compose up -d
+docker-compose exec pipeline python examples/run_pipeline.py
+
+# Or run tests locally
+pytest --cov=src
 ```
 
-### Basic Usage
-
-#### 1. Configuration Management
+## Usage Example
 
 ```python
 from src.config_manager import ConfigManager
-
-# Load configuration for development environment
-config = ConfigManager(environment="dev")
-
-# Access configuration values
-batch_size = config.get("ingestion.batch_size")
-log_level = config.get("logging.level")
-```
-
-#### 2. Ingest Data from CSV
-
-```python
-from src.ingestion import CSVDataSource, DataIngestionPipeline
-from src.config_manager import ConfigManager
-
-config = ConfigManager(environment="dev")
-
-# Create CSV data source
-csv_source = CSVDataSource(config, "data/sample_data.csv")
-
-# Ingest data
-records = list(csv_source.ingest())
-print(f"Ingested {len(records)} records")
-```
-
-#### 3. Validate Data Against Schema
-
-```python
-from src.validation import SchemaValidator
-from src.config_manager import ConfigManager
-
-config = ConfigManager(environment="dev")
-
-# Load schema
-validator = SchemaValidator.from_file("schemas/user_schema.yaml", config)
-
-# Validate a record
-record = {
-    "id": 1,
-    "name": "John Doe",
-    "email": "john@example.com",
-    "age": 30
-}
-
-result = validator.validate(record)
-if result['valid']:
-    print("Record is valid!")
-else:
-    print(f"Validation errors: {result['errors']}")
-```
-
-#### 4. Complete Pipeline Example
-
-```python
 from src.ingestion import CSVDataSource, DataIngestionPipeline
 from src.validation import SchemaValidator, DataQualityChecker
-from src.config_manager import ConfigManager
+from src.monitoring import PipelineMonitor
 
-# Setup
+# Initialize
 config = ConfigManager(environment="dev")
+monitor = PipelineMonitor(config)
+
+# Ingest from CSV
 pipeline = DataIngestionPipeline(config)
-
-# Add data sources
-csv_source = CSVDataSource(config, "data/sample_data.csv")
-pipeline.add_source(csv_source)
-
-# Run ingestion
+pipeline.add_source(CSVDataSource(config, "data/sample_data.csv"))
 records = pipeline.run()
 
-# Validate records
+# Validate
 validator = SchemaValidator.from_file("schemas/user_schema.yaml", config)
-valid_records = []
+valid_records = [r for r in records if validator.validate(r)['valid']]
 
-for record in records:
-    result = validator.validate(record)
-    if result['valid']:
-        valid_records.append(record)
-    else:
-        print(f"Invalid record: {result['errors']}")
-
-# Check data quality
+# Check quality and monitor
 quality_checker = DataQualityChecker(config)
 quality_report = quality_checker.check_quality(valid_records)
 print(f"Quality Score: {quality_report['quality_score']}/100")
+print(f"Pipeline Health: {monitor.check_health()}")
 ```
+
+**See [USER_GUIDE.md](USER_GUIDE.md) for complete examples including API and database ingestion.**
 
 ---
 
 ## Project Structure
 
-```
 .
 ├── .github/
 │   └── workflows/
@@ -185,167 +116,115 @@ print(f"Quality Score: {quality_report['quality_score']}/100")
 ├── .gitignore                  # Git ignore patterns
 ├── pytest.ini                  # Pytest configuration
 ├── requirements.txt            # Python dependencies
-├── README.md                   # This file
+├── README.md                   # Project documentation
 ├── SPRINT_0.md                 # Product backlog and planning
 └── SPRINT_1.md                 # Sprint 1 execution report
-```
 
 ---
 
-## Features
+## Architecture
 
-### Completed (Sprint 1)
-
-- **Multi-Source Data Ingestion**
-  - CSV files with automatic metadata tracking
-  - REST API with retry logic and authentication
-  - Database support (PostgreSQL, MySQL)
-  
-- **Configuration Management**
-  - Environment-specific configuration
-  - YAML-based configuration files
-  - Environment variable overrides for secrets
-  
-- **Schema Validation**
-  - YAML schema definitions
-  - Type, range, length, pattern validation
-  - Email, phone, URL format validation
-  - Data quality scoring and metrics
-  
-- **Error Handling & Logging (Sprint 2)**
-  - Structured logging with rotation
-  - Error tracking and aggregation
-  - Quarantine system for failed records
-  - Environment-specific log levels
-  
-- **Pipeline Monitoring (Sprint 2)**
-  - Real-time metrics collection
-  - Health checks with configurable thresholds
-  - Performance tracking (latency, throughput)
-  - Alert generation for critical issues
-  - Metrics export to JSON
-  
-- **Docker Containerization (Sprint 2)**
-  - Multi-stage optimized Dockerfile
-  - Docker Compose for local development
-  - Non-root user execution
-  - Health check endpoints
-  - PostgreSQL service integration
-  
-- **Testing & CI/CD**
-  - 64 comprehensive unit tests
-  - Automated GitHub Actions pipeline
-  - Coverage reporting and enforcement
-
-### Planned (Future Sprints)
-
-- End-to-end integration tests
-- Performance benchmarking
-- Security scanning in CI/CD
-- Enhanced alerting mechanisms
-- Pre-commit hooks
+┌──────────────────┐
+│   Data Sources   │  ← CSV, API, Database
+└─────────┬────────┘
+          ↓
+┌──────────────────┐
+│    Ingestion     │  ← Batch processing, retry logic
+└─────────┬────────┘
+          ↓
+┌──────────────────┐
+│    Validation    │  ← Schema checks, quality scoring
+└─────────┬────────┘
+          ↓
+┌──────────────────┐
+│   Monitoring     │  ← Metrics, health checks, alerts
+└─────────┬────────┘
+          ↓
+┌──────────────────┐
+│  Output / Logs   │  ← Valid data, error quarantine
+└──────────────────┘
 
 ---
 
-## Running Tests
+## Testing & CI/CD
+
+**64 unit tests** covering configuration, ingestion, validation, logging, and monitoring.
 
 ```bash
-# Run all tests with coverage
-pytest
-
-# Run specific test file
-pytest tests/test_ingestion.py
-
-# Run with verbose output
-pytest -v
-
-# Generate HTML coverage report
-pytest --cov=src --cov-report=html
+pytest --cov=src                    # Run all tests with coverage
+pytest tests/test_ingestion.py -v  # Run specific module
 ```
+
+**GitHub Actions CI/CD:**
+- âœ… Automated linting (pylint, black)
+- âœ… Test suite execution on every push
+- âœ… Coverage reporting (80% threshold)
+- âœ… Multi-environment validation
+
+[View pipeline status â†’](https://github.com/Zaina-M/DevOps-Lab/actions)
 
 ---
 
-## CI/CD Pipeline
+## Docker Deployment
 
-The project uses GitHub Actions for continuous integration:
-
-- **Triggers:** Push to main branch, pull requests
-- **Stages:**
-  1. Install dependencies
-  2. Code linting with pylint
-  3. Run tests with pytest
-  4. Generate coverage reports
-  5. Enforce 80% minimum coverage
-
-View pipeline status in the [Actions tab](https://github.com/Zaina-M/DevOps-Lab/actions).
-
----
-
-## Development
-
-### Setting Up Development Environment
-
-1. Create a virtual environment:
 ```bash
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+# Start pipeline + PostgreSQL
+docker-compose up
+
+# Build custom image
+docker build -t data-pipeline .
+
+# Run with custom config
+docker run -v $(pwd)/config:/app/config data-pipeline
 ```
 
-2. Install development dependencies:
-```bash
-pip install -r requirements.txt
-```
-
-3. Run tests before committing:
-```bash
-pytest
-```
-
-### Code Style
-
-- Follow PEP 8 guidelines
-- Use black for code formatting
-- Run pylint for code quality checks
+See [docs/DOCKER.md](docs/DOCKER.md) for complete deployment guide.
 
 ---
 
 ## Configuration
 
-Configuration files are located in the `config/` directory:
+Environment-specific YAML configs in `config/`:
 
-- **default.yaml** - Base configuration for all environments
-- **dev.yaml** - Development overrides (debug logging, smaller batches)
-- **prod.yaml** - Production overrides (warning logging, larger batches)
+| File | Purpose | Key Settings |
+|------|---------|-------------|
+| `default.yaml` | Base config | batch_size: 1000, workers: 4 |
+| `dev.yaml` | Development | DEBUG logs, batch_size: 100 |
+| `prod.yaml` | Production | WARNING logs, batch_size: 5000 |
 
-Set the environment using the `ENVIRONMENT` variable:
 ```bash
-export ENVIRONMENT=prod  # On Windows: set ENVIRONMENT=prod
+# Switch environments
+export ENVIRONMENT=prod  # Windows: set ENVIRONMENT=prod
 ```
-
----
-
-## Contributing
-
-1. Create a feature branch
-2. Make your changes
-3. Write tests for new functionality
-4. Ensure all tests pass
-5. Submit a pull request
-
----
-
-## License
-
-This project is part of an academic DevOps course and is for educational purposes.
 
 ---
 
 ## Project Status
 
-**Current Sprint:** Sprint 2 (Completed)  
-**Next Sprint:** Sprint 3  
-**Overall Progress:** Core features complete, observability implemented
+| Sprint | Focus | Points | Status |
+|--------|-------|-----------|--------|
+| Sprint 1 | Foundation (ingestion, validation, config) | 16/16 | âœ… Complete |
+| Sprint 2 | Observability (logging, monitoring, Docker) | 23/23 | âœ… Complete |
+| Sprint 3 | Integration tests, CI/CD, security | 24 | ðŸ“… Planned |
 
-**Sprint Summaries:**
-- [SPRINT_1.md](SPRINT_1.md) - Foundation: Ingestion, validation, configuration (16 points)
-- [SPRINT_2.md](SPRINT_2.md) - Observability: Logging, monitoring, Docker (23 points)
+**Progress:** 39/55 story points (71%)  
+**Test Coverage:** 90.48% (latest `coverage.xml`)
+
+---
+
+## Documentation
+
+| Resource | Description |
+|----------|-------------|
+| **[USER_GUIDE.md](USER_GUIDE.md)** | Complete setup and usage instructions |
+| **[DOCKER.md](docs/DOCKER.md)** | Container deployment guide |
+| **[SPRINT_0.md](SPRINT_0.md)** | Product backlog and planning |
+| **[SPRINT_1.md](SPRINT_1.md)** | Sprint 1 execution report |
+| **[SPRINT_2.md](SPRINT_2.md)** | Sprint 2 execution report |
+
+---
+
+## License
+
+Academic project for DevOps coursework
+
